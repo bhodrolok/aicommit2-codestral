@@ -267,6 +267,20 @@ const configParsers = {
         parseAssert('MISTRAL_MODEL', supportModels.includes(model), 'Invalid model type of Mistral AI');
         return model;
     },
+    CODESTRAL_KEY(key?: string) {
+        if (!key) {
+            return '';
+        }
+        return key;
+    },
+    CODESTRAL_MODEL(model?: string) {
+        if (!model || model.length === 0) {
+            return 'codestral-latest';
+        }
+        const supportModels = ['codestral-latest'];
+        parseAssert('CODESTRAL_MODEL', supportModels.includes(model), 'Invalid model type of Codestral');
+        return model;
+    },
     OLLAMA_MODEL(models?: string | string[]): string[] {
         if (!models) {
             return [];
