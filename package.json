@@ -27,6 +27,7 @@
         "gemini-pro",
         "generative-ai",
         "mistral",
+        "codestral",
         "ollama",
         "llama3",
         "llm",
