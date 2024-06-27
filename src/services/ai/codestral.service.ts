@@ -46,6 +46,7 @@ export interface CreateChatCompletionsResponse {
 export class CodestralService extends AIService {
     private host = `https://codestral.mistral.ai`;
     private apiKey = '';
+    private apiKeyMistral = '';
 
     constructor(private readonly params: AIServiceParams) {
         super(params);
@@ -56,6 +57,7 @@ export class CodestralService extends AIService {
         this.serviceName = chalk.bgHex(this.colors.primary).hex(this.colors.secondary).bold('[Codestral]');
         this.errorPrefix = chalk.red.bold(`[Codestral]`);
         this.apiKey = this.params.config.CODESTRAL_KEY;
+        this.apiKeyMistral = this.params.config.MISTRAL_KEY;
     }
 
     generateCommitMessage$(): Observable<ReactiveListChoice> {
@@ -76,6 +78,7 @@ export class CodestralService extends AIService {
             const { locale, generate, type, prompt: userPrompt, logging } = this.params.config;
             const maxLength = this.params.config['max-length'];
             const prompt = this.buildPrompt(locale, diff, generate, maxLength, type, userPrompt);
+            await this.checkAvailableModels();
             const chatResponse = await this.createChatCompletions(prompt);
             logging && createLogResponse('Codestral', diff, prompt, chatResponse);
             return deduplicateMessages(this.sanitizeMessage(chatResponse, this.params.config.type, generate));
@@ -98,11 +101,32 @@ export class CodestralService extends AIService {
         });
     };
 
+    private async checkAvailableModels() {
+        const availableModels = await this.getAvailableModels();
+        if (availableModels.includes(this.params.config.CODESTRAL_MODEL)) {
+            return true;
+        }
+        throw new Error(`Invalid model type of Mistral AI`);
+    }
+
+    private async getAvailableModels() {
+        const response: AxiosResponse<ListAvailableModelsResponse> = await new HttpRequestBuilder({
+            method: 'GET',
+            baseURL: `https://api.mistral.ai/v1/models`,
+            timeout: this.params.config.timeout,
+        })
+            .setHeaders({
+                Authorization: `Bearer ${this.apiKeyMistral}`,
+                'content-type': 'application/json',
+            })
+            .execute();
+
+        return response.data.data.filter(model => model.object === 'model').map(model => model.id);
+    }
+
     private async createChatCompletions(prompt: string) {
         const response: AxiosResponse<CreateChatCompletionsResponse> = await new HttpRequestBuilder({
             method: 'POST',
-            // Chat Endpoint: /v1/chat/completions
-            // Completion Endpoint: /v1/fim/completions
             baseURL: `${this.host}/v1/chat/completions`,
             timeout: this.params.config.timeout,
         })

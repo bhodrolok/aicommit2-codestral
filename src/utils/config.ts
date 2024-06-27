@@ -277,7 +277,7 @@ const configParsers = {
         if (!model || model.length === 0) {
             return 'codestral-latest';
         }
-        const supportModels = ['codestral-latest'];
+        const supportModels = ['codestral-latest', 'codestral-2405'];
         parseAssert('CODESTRAL_MODEL', supportModels.includes(model), 'Invalid model type of Codestral');
         return model;
     },
