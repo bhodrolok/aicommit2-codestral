@@ -1,6 +1,6 @@
 {
     "name": "aicommit2",
-    "version": "0.0.0-semantic-release",
+    "version": "0.0.1-semantic-release",
     "description": "A Reactive CLI that generates git commit messages with various AI",
     "keywords": [
         "cli",
