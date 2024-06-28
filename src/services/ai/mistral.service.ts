@@ -44,18 +44,22 @@ export interface CreateChatCompletionsResponse {
 }
 
 export class MistralService extends AIService {
-    private host = `https://api.mistral.ai`;
+    private use_codestral = this.params.config.MISTRAL_MODEL === 'codestral-latest';
+    private host = this.use_codestral ? 'https://codestral.mistral.ai' : 'https://api.mistral.ai';
     private apiKey = '';
 
     constructor(private readonly params: AIServiceParams) {
         super(params);
         this.colors = {
-            primary: '#FC4A0A',
+            primary: this.use_codestral ? '#199910' : '#FC4A0A',
             secondary: '#fff',
         };
-        this.serviceName = chalk.bgHex(this.colors.primary).hex(this.colors.secondary).bold('[MistralAI]');
-        this.errorPrefix = chalk.red.bold(`[MistralAI]`);
-        this.apiKey = this.params.config.MISTRAL_KEY;
+        this.serviceName = this.use_codestral
+            ? chalk.bgHex(this.colors.primary).hex(this.colors.secondary).bold('[MistralAI-Codestral]')
+            : chalk.bgHex(this.colors.primary).hex(this.colors.secondary).bold('[MistralAI]');
+        this.errorPrefix = this.use_codestral ? chalk.red.bold(`[MistralAI-Codestral]`) : chalk.red.bold(`[MistralAI]`);
+        this.apiKey = this.use_codestral ? this.params.config.CODESTRAL_KEY : this.params.config.MISTRAL_KEY;
+        //this.apiKey = this.params.config.MISTRAL_KEY;
     }
 
     generateCommitMessage$(): Observable<ReactiveListChoice> {
@@ -110,7 +114,9 @@ export class MistralService extends AIService {
     private async getAvailableModels() {
         const response: AxiosResponse<ListAvailableModelsResponse> = await new HttpRequestBuilder({
             method: 'GET',
-            baseURL: `${this.host}/v1/models`,
+            // The 'List Available Models' endpoint is only available in the `api.mistral.ai` domain, codestral models included in the response
+            // also currently `codestral-latest` points to `codestral-2405` src: https://docs.mistral.ai/getting-started/models/#api-versioning
+            baseURL: 'https://api.mistral.ai/v1/models',
             timeout: this.params.config.timeout,
         })
             .setHeaders({
